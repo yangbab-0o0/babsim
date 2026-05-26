@@ -1,0 +1,216 @@
+"use client"
+
+import { useState } from "react"
+import { X } from "lucide-react"
+import { BabsimiCharacter } from "./babsimi-character"
+import { type Result } from "@/lib/quiz-data"
+
+interface ResultScreenProps {
+  result: Result
+  answers: number[]
+  onRestart: () => void
+  onClose: () => void
+}
+
+export function ResultScreen({ result, answers, onRestart, onClose }: ResultScreenProps) {
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleShare = () => {
+    setIsShareModalOpen(true)
+  }
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !phone.trim()) {
+      alert("이름과 전화번호를 모두 입력해주세요.")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      await fetch("https://script.google.com/macros/s/AKfycbzxm-pBulzB81CwbYCC9mmHe9EuVwBedpmbfAMWyzZc9s7itEZtYqi0T_VqL-ahBeX2/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          name: name,
+          phone: phone,
+          resultType: result.name,
+          answers: answers
+        }),
+      })
+
+      alert("이벤트 참여가 완료되었습니다! 소중한 정보 감사합니다.")
+      setIsShareModalOpen(false)
+      // Reset form
+      setName("")
+      setPhone("")
+      
+      // Return to landing page
+      onRestart()
+    } catch (error) {
+      console.error("Submission error:", error)
+      alert("전송에 실패했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-background z-50 flex flex-col">
+      {/* Decorative peach circles */}
+      <div className="absolute top-20 left-4 w-20 h-20 rounded-full bg-peach-light opacity-50 pointer-events-none" />
+      <div className="absolute top-1/4 right-4 w-24 h-24 rounded-full bg-peach opacity-35 pointer-events-none" />
+      <div className="absolute bottom-48 left-8 w-28 h-28 rounded-full bg-peach-light opacity-45 pointer-events-none" />
+      <div className="absolute bottom-32 right-8 w-16 h-16 rounded-full bg-peach opacity-40 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 w-12 h-12 rounded-full bg-peach-light opacity-30 pointer-events-none" />
+
+      {/* Close Button (Floating Top Right) */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-border hover:bg-secondary rounded-full transition-colors z-50 shadow-sm"
+      >
+        <X className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
+      </button>
+
+      {/* Content */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-8">
+        <div className="min-h-full flex flex-col items-center justify-center py-4">
+          <div className="max-w-md w-full text-center">
+          {/* Babsimi character with glow */}
+          <div className="mb-8 relative">
+            <div className="absolute inset-0 bg-peach-light rounded-full blur-2xl opacity-60 scale-110" />
+            <BabsimiCharacter className="relative w-36 h-36 md:w-44 md:h-44 mx-auto" />
+          </div>
+
+          {/* Result name */}
+          <h1 className="text-3xl md:text-4xl font-black text-foreground mb-4">
+            {result.name}
+          </h1>
+
+          {/* Description */}
+          <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed whitespace-pre-line">
+            {result.description}
+          </p>
+
+          {/* Tags */}
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {result.tags.map((tag, index) => (
+              <span
+                key={index}
+                className="px-4 py-2 bg-secondary text-primary text-sm font-bold rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border my-8" />
+
+          {/* Action buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={onRestart}
+              className="flex-1 py-4 px-6 bg-card text-foreground font-bold text-base rounded-2xl border border-border hover:border-primary hover:text-primary transition-all duration-200"
+            >
+              다시 하기
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 py-4 px-6 bg-primary text-primary-foreground font-bold text-base rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md"
+            >
+              공유하기
+            </button>
+          </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-all">
+          <div className="bg-background rounded-3xl max-w-sm w-full p-6 shadow-xl relative overflow-y-auto max-h-[90vh]">
+            <button
+              onClick={() => setIsShareModalOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center hover:bg-secondary rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            <h2 className="text-2xl font-black text-foreground mb-2">이벤트 참여하기</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              밥심이를 도와주고 특별한 경품을 받아가세요!
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1">이름</label>
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="이름을 입력해주세요" 
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:outline-none focus:border-primary transition-all font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1">전화번호</label>
+                <input 
+                  type="tel" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="010-0000-0000" 
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:outline-none focus:border-primary transition-all font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-8">
+              <label className="block text-sm font-bold text-foreground mb-2">경품 안내 (응모 시 추첨)</label>
+              
+              {/* Baemin Coupon Image (CSS replica) */}
+              <div className="w-full h-24 bg-[#2ac1bc] rounded-xl relative overflow-hidden flex items-center shadow-md border border-[#23a5a1]">
+                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-background rounded-full border border-[#23a5a1]" />
+                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-background rounded-full border border-[#23a5a1]" />
+                <div className="ml-8 text-white">
+                  <div className="text-xs font-bold opacity-90 mb-1">배달의민족</div>
+                  <div className="text-2xl font-black tracking-tight">20,000원 쿠폰</div>
+                </div>
+              </div>
+
+              {/* Babsimi Meal Ticket Image (CSS replica) */}
+              <div className="w-full h-24 bg-gradient-to-br from-amber-100 to-amber-300 rounded-xl relative overflow-hidden flex items-center shadow-md border border-amber-400">
+                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-background rounded-full border border-amber-400" />
+                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-background rounded-full border border-amber-400" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30">
+                   <BabsimiCharacter className="w-16 h-16" />
+                </div>
+                <div className="ml-8 text-amber-900 relative z-10">
+                  <div className="text-xs font-bold opacity-80 mb-1">특별 식사권</div>
+                  <div className="text-2xl font-black tracking-tight">밥심이와 한끼 식사</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              disabled={isSubmitting}
+              className={`w-full py-4 font-bold text-lg rounded-2xl transition-all shadow-md ${
+                isSubmitting 
+                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]"
+              }`}
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? "전송 중..." : "참여 완료"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
