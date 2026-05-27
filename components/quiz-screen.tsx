@@ -14,35 +14,27 @@ export function QuizScreen({ onComplete, onClose }: QuizScreenProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
-  const [lastClickTime, setLastClickTime] = useState(0)
 
   const question = questions[currentQuestion]
   const progress = ((currentQuestion + 1) / questions.length) * 100
   const isLastQuestion = currentQuestion === questions.length - 1
 
   const handleOptionClick = useCallback((optionIndex: number) => {
-    const now = Date.now()
-    
-    // Check for double click (within 500ms)
-    if (selectedOption === optionIndex && now - lastClickTime < 500) {
-      // Double click detected - proceed to next question
+    setSelectedOption(optionIndex)
+  }, [])
+
+  const handleNext = useCallback(() => {
+    if (selectedOption !== null) {
       const newAnswers = [...answers]
-      newAnswers[currentQuestion] = optionIndex
+      newAnswers[currentQuestion] = selectedOption
       setAnswers(newAnswers)
       
-      if (isLastQuestion) {
-        // Show the result button
-      } else {
+      if (!isLastQuestion) {
         setCurrentQuestion(prev => prev + 1)
         setSelectedOption(null)
       }
-    } else {
-      // First click - just select
-      setSelectedOption(optionIndex)
     }
-    
-    setLastClickTime(now)
-  }, [selectedOption, lastClickTime, answers, currentQuestion, isLastQuestion])
+  }, [selectedOption, answers, currentQuestion, isLastQuestion])
 
   const handleBack = useCallback(() => {
     if (currentQuestion > 0) {
@@ -111,9 +103,10 @@ export function QuizScreen({ onComplete, onClose }: QuizScreenProps) {
       {/* Question */}
       <div className="relative z-10 flex-1 flex flex-col px-4 md:px-8 pb-8 overflow-auto">
         <div className="max-w-2xl mx-auto w-full">
-          <h2 className="text-xl md:text-3xl font-black text-foreground mb-8 leading-tight">
-            {question.question}
-          </h2>
+          <h2 
+            className="text-xl md:text-3xl font-black text-foreground mb-8 leading-tight [&_b]:text-primary [&_strong]:text-primary"
+            dangerouslySetInnerHTML={{ __html: question.question }}
+          />
 
           {/* Options */}
           <div className="space-y-4">
@@ -127,30 +120,28 @@ export function QuizScreen({ onComplete, onClose }: QuizScreenProps) {
                     : "bg-card border-border hover:border-primary/50"
                 }`}
               >
-                <span className="text-base md:text-lg font-medium text-foreground">
-                  {option}
-                </span>
+                <span 
+                  className="text-base md:text-lg font-medium text-foreground [&_b]:font-black [&_strong]:font-black"
+                  dangerouslySetInnerHTML={{ __html: option }}
+                />
               </button>
             ))}
           </div>
 
-          {/* Double click hint */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {selectedOption !== null 
-              ? "더블클릭하여 다음으로 이동"
-              : "옵션을 선택하세요"
-            }
-          </p>
-
-          {/* Show result button on last question */}
-          {isLastQuestion && selectedOption !== null && answers.length >= currentQuestion && (
+          {/* Action Button */}
+          <div className="mt-8">
             <button
-              onClick={handleShowResult}
-              className="w-full mt-8 py-4 px-6 bg-primary text-primary-foreground font-bold text-lg rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md"
+              onClick={isLastQuestion ? handleShowResult : handleNext}
+              disabled={selectedOption === null}
+              className={`w-full py-4 px-6 font-bold text-lg rounded-2xl transition-all duration-200 shadow-md ${
+                selectedOption !== null 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+              }`}
             >
-              결과 보기
+              {isLastQuestion ? "결과 보기" : "다음"}
             </button>
-          )}
+          </div>
         </div>
       </div>
     </div>

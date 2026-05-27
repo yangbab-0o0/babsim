@@ -93,9 +93,10 @@ export function ResultScreen({ result, answers, onRestart, onClose }: ResultScre
           </h1>
 
           {/* Description */}
-          <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed whitespace-pre-line">
-            {result.description}
-          </p>
+          <div 
+            className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed whitespace-pre-line [&_b]:font-bold [&_b]:text-foreground [&_strong]:font-bold [&_strong]:text-foreground"
+            dangerouslySetInnerHTML={{ __html: result.description }}
+          />
 
           {/* Tags */}
           <div className="flex flex-wrap justify-center gap-2 mb-10">
@@ -113,18 +114,18 @@ export function ResultScreen({ result, answers, onRestart, onClose }: ResultScre
           <div className="border-t border-border my-8" />
 
           {/* Action buttons */}
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={onRestart}
-              className="flex-1 py-4 px-6 bg-card text-foreground font-bold text-base rounded-2xl border border-border hover:border-primary hover:text-primary transition-all duration-200"
+              className="flex-1 py-4 bg-secondary text-secondary-foreground font-bold text-base md:text-lg rounded-2xl hover:bg-secondary/80 transition-all active:scale-[0.98]"
             >
-              다시 하기
+              다시하기
             </button>
             <button
               onClick={handleShare}
-              className="flex-1 py-4 px-6 bg-primary text-primary-foreground font-bold text-base rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md"
+              className="flex-1 py-4 bg-primary text-primary-foreground font-bold text-base md:text-lg rounded-2xl hover:bg-primary/90 transition-all active:scale-[0.98] shadow-md"
             >
-              공유하기
+              이벤트 참여하기
             </button>
           </div>
           </div>
