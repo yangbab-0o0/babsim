@@ -113,7 +113,9 @@ export function LandingPage({ onStart }: LandingPageProps) {
           </a>
 
           <a
-            href="#"
+            href="https://babsim-house.netlify.app/maps"
+            target="_blank"
+            rel="noopener noreferrer"
             className="block w-full py-4 px-6 bg-card text-foreground font-bold text-base rounded-2xl border border-border hover:border-primary hover:text-primary transition-all duration-200 text-center"
           >
             맛집지도 보기
