@@ -4,6 +4,7 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { BabsimiCharacter } from "./babsimi-character"
 import { type Result } from "@/lib/quiz-data"
+import { renderRichText } from "@/lib/rich-text"
 
 interface ResultScreenProps {
   result: Result
@@ -16,45 +17,64 @@ export function ResultScreen({ result, answers, onRestart, onClose }: ResultScre
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
+  const [consent, setConsent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const PHONE_REGEX = /^01[0-9]-?\d{3,4}-?\d{4}$/
 
   const handleShare = () => {
     setIsShareModalOpen(true)
   }
 
   const handleSubmit = async () => {
-    if (!name.trim() || !phone.trim()) {
-      alert("이름과 전화번호를 모두 입력해주세요.")
+    if (!name.trim()) {
+      alert("이름을 입력해주세요.")
+      return
+    }
+    if (!PHONE_REGEX.test(phone.trim())) {
+      alert("올바른 전화번호를 입력해주세요. (예: 010-1234-5678)")
+      return
+    }
+    if (!consent) {
+      alert("개인정보 수집·이용에 동의해주세요.")
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      await fetch("https://script.google.com/macros/s/AKfycbzxm-pBulzB81CwbYCC9mmHe9EuVwBedpmbfAMWyzZc9s7itEZtYqi0T_VqL-ahBeX2/exec", {
+      const response = await fetch("/api/submit", {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: name,
-          phone: phone,
+          name: name.trim(),
+          phone: phone.trim(),
           resultType: result.name,
-          answers: answers
+          answers: answers,
+          consent: consent,
         }),
       })
+
+      // fetch는 HTTP 4xx/5xx에 reject하지 않으므로 응답 상태를 직접 확인한다
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(data?.error ?? "전송에 실패했습니다.")
+      }
 
       alert("이벤트 참여가 완료되었습니다! 소중한 정보 감사합니다.")
       setIsShareModalOpen(false)
       // Reset form
       setName("")
       setPhone("")
-      
+      setConsent(false)
+
       // Return to landing page
       onRestart()
     } catch (error) {
       console.error("Submission error:", error)
-      alert("전송에 실패했습니다. 다시 시도해주세요.")
+      alert(error instanceof Error ? error.message : "전송에 실패했습니다. 다시 시도해주세요.")
     } finally {
       setIsSubmitting(false)
     }
@@ -93,10 +113,9 @@ export function ResultScreen({ result, answers, onRestart, onClose }: ResultScre
           </h1>
 
           {/* Description */}
-          <div 
-            className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed whitespace-pre-line [&_b]:font-bold [&_b]:text-foreground [&_strong]:font-bold [&_strong]:text-foreground"
-            dangerouslySetInnerHTML={{ __html: result.description }}
-          />
+          <div className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed whitespace-pre-line [&_strong]:font-bold [&_strong]:text-foreground">
+            {renderRichText(result.description)}
+          </div>
 
           {/* Tags */}
           <div className="flex flex-wrap justify-center gap-2 mb-10">
@@ -198,10 +217,24 @@ export function ResultScreen({ result, answers, onRestart, onClose }: ResultScre
               </div>
             </div>
 
+            {/* 개인정보 수집·이용 동의 */}
+            <label className="flex items-start gap-3 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 w-5 h-5 flex-shrink-0 accent-primary cursor-pointer"
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-bold text-foreground">(필수)</span> 경품 추첨 및 안내를 위해 이름과
+                전화번호를 수집·이용하는 것에 동의합니다. 수집된 정보는 이벤트 종료 후 파기됩니다.
+              </span>
+            </label>
+
             <button
-              disabled={isSubmitting}
+              disabled={isSubmitting || !consent}
               className={`w-full py-4 font-bold text-lg rounded-2xl transition-all shadow-md ${
-                isSubmitting 
+                isSubmitting || !consent
                   ? "bg-muted text-muted-foreground cursor-not-allowed"
                   : "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]"
               }`}

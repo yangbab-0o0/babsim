@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { X, ChevronLeft } from "lucide-react"
 import { BabsimiCharacter } from "./babsimi-character"
 import { questions } from "@/lib/quiz-data"
+import { renderRichText } from "@/lib/rich-text"
 
 interface QuizScreenProps {
   onComplete: (answers: number[]) => void
@@ -103,10 +104,9 @@ export function QuizScreen({ onComplete, onClose }: QuizScreenProps) {
       {/* Question */}
       <div className="relative z-10 flex-1 flex flex-col px-4 md:px-8 pb-8 overflow-auto">
         <div className="max-w-2xl mx-auto w-full">
-          <h2 
-            className="text-xl md:text-3xl font-black text-foreground mb-8 leading-tight [&_b]:text-primary [&_strong]:text-primary"
-            dangerouslySetInnerHTML={{ __html: question.question }}
-          />
+          <h2 className="text-xl md:text-3xl font-black text-foreground mb-8 leading-tight [&_strong]:text-primary">
+            {renderRichText(question.question)}
+          </h2>
 
           {/* Options */}
           <div className="space-y-4">
@@ -120,10 +120,9 @@ export function QuizScreen({ onComplete, onClose }: QuizScreenProps) {
                     : "bg-card border-border hover:border-primary/50"
                 }`}
               >
-                <span 
-                  className="text-base md:text-lg font-medium text-foreground [&_b]:font-black [&_strong]:font-black"
-                  dangerouslySetInnerHTML={{ __html: option }}
-                />
+                <span className="text-base md:text-lg font-medium text-foreground [&_strong]:font-black">
+                  {renderRichText(option)}
+                </span>
               </button>
             ))}
           </div>
